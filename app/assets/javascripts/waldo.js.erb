@@ -1,0 +1,67 @@
+document.addEventListener("DOMContentLoaded", function(event) {
+  const body = document.body // document.getElementsByTagName("BODY")[0];
+  if (body.classList.contains('waldo')){
+    let scene = body.getElementsByClassName("scene")[0]
+    let targetList = Array.from(body.getElementsByClassName("targetList")[0].children , target => target.textContent)
+    console.log(targetList);
+    picture_id = scene.getAttribute("picture_id")
+    console.log(`picture_id: ${picture_id}`);
+    scene.addEventListener("click",(e) => selectMousePos(e,picture_id,targetList), {capture : false})
+
+  }
+});
+
+function selectMousePos(e,picture_id,targetList) {
+  let selectionBox = document.body.getElementsByClassName("selectionBox")[0]
+  if (selectionBox){
+    selectionBox.parentNode.removeChild(selectionBox)
+  } else{
+    let x = 1000 * (e.clientX - e.target.offsetLeft + window.pageXOffset)/e.target.clientWidth;
+    let y = 1000 * (e.clientY - e.target.offsetTop  + window.pageYOffset)/e.target.clientWidth;
+    console.log(e.target);
+    console.log(`x: ${x}  y: ${y}`);
+    selectionBox = document.createElement("div");
+    selectionBox.classList.add("selectionBox");
+    selectionBox.style.left = (e.clientX + window.pageXOffset - 25)+ 'px';
+    selectionBox.style.top = (e.clientY + window.pageYOffset - 25) + 'px';
+    document.body.appendChild(selectionBox);
+    let selectionList = document.createElement("div");
+    selectionList.classList.add("list");
+    for (let i = 0; i < targetList.length; i++) {
+      let listItem = document.createElement("button");
+      listItem.textContent = targetList[i];
+      selectionList.appendChild(listItem);
+      selectionBox.appendChild(selectionList);
+      listItem.addEventListener("click", (ev) => {
+        checkSelection(x,y,i,targetList)
+        selectionBox.parentNode.removeChild(selectionBox)
+      })
+    }
+  }
+}
+
+function checkSelection(x,y,selection,targetList){
+  const token = document.getElementsByName("csrf-token")[0].content
+  fetch( 'search/click', {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "X-CSRF-Token": token
+    },
+    body: JSON.stringify({x: x, y: y, name:targetList[selection]})
+  }).then(response => response.json())
+  .then(json => {
+    if(json){
+      document.body.getElementsByClassName("targetList")[0].querySelector(`[name=${targetList[selection].replace(/ /g,"_")}]`).classList.add("found")
+      targetList.splice(selection,1)
+      let scene = document.body.getElementsByClassName("scene")[0]
+      let foundBox = document.createElement("div")
+      foundBox.classList.add("foundBox");
+      foundBox.style.left = (json.x)/1000 * scene.clientWidth + scene.offsetLeft - 12 + 'px';
+      foundBox.style.top  = (json.y)/1000 * scene.clientWidth + scene.offsetTop - 12 + 'px';
+      document.body.appendChild(foundBox);
+    }
+
+  })
+}

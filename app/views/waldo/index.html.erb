@@ -1,0 +1,8 @@
+<h1> Find: </h1>
+<!-- Controller: <%= controller_name %> // Action: <%= action_name %></p> -->
+<ul class = "targetList">
+<% for target in @targets do %>
+ <li name = <%= target.name.tr(" ","_") %>><%= target.name %></li>
+<% end %>
+</ul>
+<%= image_tag '91qfVY7.jpg' , class: "scene" , picture_id: "1"%>
